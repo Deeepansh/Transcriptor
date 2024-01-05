@@ -1413,6 +1413,19 @@ void Editor::setShowTimeStamp()
     QTextCursor cursorx(this->document()->findBlockByNumber(highlightedBlock));
     this->setTextCursor(cursorx);
 
+    qInfo()<<"size of m_blocks is: "<<m_blocks.size();
+    qInfo()<<"\ntime stamp of m_block 1 is: "<<m_blocks[1].timeStamp;
+
+    QVector<QTime> timevec;
+    QTime t;
+    for(int i = 0; i < m_blocks.size(); ++i)
+    {
+        t = m_blocks[i].timeStamp;
+        timevec.append(t);
+    }
+
+    emit sendBlockTime(timevec);
+
 }
 
 void Editor::setContent()
@@ -2863,6 +2876,7 @@ void Editor::on_actionVoice_triggered()
             QNetworkRequest request(QUrl("https://3.6.185.140:5555/transcript"));
             request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
             QNetworkReply *reply = manager.post(request, m_audioData);
+            qInfo()<<"Sendind data to convert to text\n";
             qDebug() << reply->readAll();
             // Connect the signal to handle the API response
             QObject::connect(reply, &QNetworkReply::finished, [&reply]() {

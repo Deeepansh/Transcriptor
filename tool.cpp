@@ -3,6 +3,11 @@
 #include "editor/utilities/keyboardshortcutguide.h"
 #include <QProgressBar>
 
+//----------------------------------
+#include<transcriptgenerator.h>
+#include"./ui_audiowaveform.h"
+//----------------------------------
+
 #include <QFontDialog>
 #include <QMessageBox>
 
@@ -17,6 +22,14 @@ Tool::Tool(QWidget *parent)
 
     player = new MediaPlayer(this);
     player->setVideoOutput(ui->m_videoWidget);
+
+    //ui->tabWidget->addTab(new QWidget(), "wave");
+
+
+    QBoxLayout *wavetablayout = new QVBoxLayout;
+    wavetablayout->addWidget(ui->waveWidget);
+    ui->tab_3->setLayout(wavetablayout);
+    //setLayout(wavetablayout);
 
     ui->splitter_tool->setCollapsible(0, false);
     ui->splitter_tool->setCollapsible(1, false);
@@ -57,6 +70,18 @@ Tool::Tool(QWidget *parent)
     connect(player, &QMediaPlayer::mutedChanged, ui->m_playerControls, &PlayerControls::setMuted);
     connect(player, &MediaPlayer::message, this->statusBar(), &QStatusBar::showMessage);
     connect(player, QOverload<QMediaPlayer::Error>::of(&QMediaPlayer::error), this, &Tool::handleMediaPlayerError);
+
+    //--------------------
+    //Connect Mediaplayer to waveform widgets
+    connect(player, &MediaPlayer::sendBuffer, ui->m_playerControls, &PlayerControls::processBuffer);
+    connect(player, &MediaPlayer::sendDuration, ui->m_playerControls, &PlayerControls::getDuration);
+
+    connect(player, &MediaPlayer::sendBuffer, ui->waveWidget, &AudioWaveForm::processBuffer);
+    connect(player, &MediaPlayer::sendDuration, ui->waveWidget, &AudioWaveForm::getDuration);
+
+    connect(ui->m_editor, &Editor::sendBlockTime, ui->waveWidget, &AudioWaveForm::getTimeArray);
+
+    //--------------------
 
     // Connect components dependent on Player's position change to player
     connect(player, &QMediaPlayer::positionChanged, this,
@@ -123,6 +148,9 @@ Tool::Tool(QWidget *parent)
     connect(ui->m_editor, &Editor::refreshTagList, ui->m_tagListDisplay, &TagListDisplayWidget::refreshTags);
     connect(ui->Show_Time_Stamps, &QAction::triggered, ui->m_editor,&Editor::setShowTimeStamp );
     connect(ui->move_along_timestamps, &QAction::triggered, ui->m_editor,&Editor::setMoveAlongTimeStamps );
+
+    //Real time data saver
+    //connect(ui->m_editor, &Editor::contentChanged, ui->m_editor, &Editor::transcriptSave);
 
 
     connect(ui->Open_File_in_Editor1, &QAction::triggered, ui->m_editor_2, &Editor::transcriptOpen);
@@ -298,9 +326,9 @@ void Tool::transliterationSelected(QAction* action)
 
 
 
-
 void Tool::on_Upload_and_generate_Transcript_triggered()
 {
+
     QFileDialog fileDialog(this);
     fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
     fileDialog.setWindowTitle(tr("Open File"));
@@ -313,7 +341,8 @@ void Tool::on_Upload_and_generate_Transcript_triggered()
         TranscriptGenerator tr(fileUrl);
         qInfo()<<QThread::currentThread();
         //running transcript generator on another thread (parallel processing)
-        QtConcurrent::run(&tr, &TranscriptGenerator::Upload_and_generate_Transcript);
+        //QtConcurrent::run(&tr, &TranscriptGenerator::Upload_and_generate_Transcript);
+        tr.Upload_and_generate_Transcript();
 
 
         QFile myfile(fileUrl->toLocalFile());
@@ -344,8 +373,53 @@ void Tool::on_Upload_and_generate_Transcript_triggered()
         }
         ui->m_editor_2->loadTranscriptData(transcriptFile2);
         ui->m_editor_2->setContent();
+    /*
+    QFileDialog fileDialog(this);
+    fileDialog.setAcceptMode(QFileDialog::AcceptOpen);
+    fileDialog.setWindowTitle(tr("Open File"));
+    fileDialog.setDirectory(QStandardPaths::standardLocations(
+                                QStandardPaths::DocumentsLocation).value(0, QDir::homePath()));
 
+
+    if (fileDialog.exec() == QDialog::Accepted) {
+        QUrl *fileUrl = new QUrl(fileDialog.selectedUrls().constFirst());
+        TranscriptGenerator tr(fileUrl);
+        tr.Upload_and_generate_Transcript();
+
+        //----------------------------
+        QFile myfile(fileUrl->toLocalFile());
+        QFileInfo fileInfo(myfile);
+        QString filename(fileInfo.fileName());
+        QString filepaths=fileInfo.dir().path();
+
+        qInfo()<<filepaths+"/transcript.xml";
+
+        bool fileExists = QFileInfo::exists(filepaths+"/transcript.xml") && QFileInfo(filepaths+"/transcript.xml").isFile();
+        while(!fileExists){
+            fileExists = QFileInfo::exists(filepaths+"/transcript.xml") && QFileInfo(filepaths+"/transcript.xml").isFile();
+        }
+
+        QFile transcriptFile(filepaths+"/transcript.xml");
+        if (!transcriptFile.open(QIODevice::ReadOnly)) {
+            qInfo()<<(transcriptFile.errorString());
+            return;
+        }
+        ui->m_editor->loadTranscriptData(transcriptFile);
+        ui->m_editor->setContent();
+        transcriptFile.close();
+
+        QFile transcriptFile2(filepaths+"/transcript.xml");
+        if (!transcriptFile2.open(QIODevice::ReadOnly)) {
+            qInfo()<<(transcriptFile2.errorString());
+            return;
+        }
+        ui->m_editor_2->loadTranscriptData(transcriptFile2);
+        ui->m_editor_2->setContent();
+        //----------------------------
+        */
     }
+
+
 
 }
 

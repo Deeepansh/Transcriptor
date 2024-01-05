@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QVideoWidget>
+#include <QWidget>
+#include <QPainter>
 
 class VideoWidget : public QVideoWidget
 {
@@ -13,4 +15,5 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
+
 };

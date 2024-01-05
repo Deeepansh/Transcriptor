@@ -1,11 +1,16 @@
 #pragma once
 
+//-------------------------
+//#include"qcustomplot.h"
+//-------------------------
 #include <QMainWindow>
 #include "mediaplayer/mediaplayer.h"
 #include "editor/texteditor.h"
 #include<QThread>
 #include<QtConcurrent/QtConcurrent>
 #include "./transcriptgenerator.h"
+#include"audiowaveform.h"
+
 QT_BEGIN_NAMESPACE
     namespace Ui { class Tool; }
 QT_END_NAMESPACE
@@ -71,3 +76,4 @@ private:
     QMap<QString, QString> m_transliterationLang;
 
 };
+

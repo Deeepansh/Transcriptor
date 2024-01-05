@@ -78,6 +78,15 @@ add_executable(
         editor/utilities/equationeditor.h
         editor/utilities/equationeditor.cpp
         editor/utilities/equationeditor.ui
+        mediaplayer/fftw3.h
+        mediaplayer/qcustomplot.h
+        audiowaveform.h audiowaveform.cpp audiowaveform.ui
+
+
+
+
+
+
 )
 
 
@@ -91,4 +100,10 @@ target_link_libraries(
         Qt5::MultimediaWidgets
         Qt5::Network
         Qt5::PrintSupport
+
+        D:/Sem1_PDF/IITB/Integrate2/fftw/libfftw3-3.dll
+
+        D:/Sem1_PDF/IITB/Integrate2/fftw/libfftw3f-3.dll
+
+        D:/Sem1_PDF/IITB/Integrate2/fftw/libfftw3l-3.dll
 )

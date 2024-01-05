@@ -1,5 +1,9 @@
 #include "mediaplayer.h"
 
+//-----------------------------
+
+#include"playercontrols.h"
+//-----------------------------
 MediaPlayer::MediaPlayer(QWidget *parent)
     : QMediaPlayer(parent)
 {
@@ -30,9 +34,9 @@ QString MediaPlayer::getMediaFileName()
 
 QString MediaPlayer::getPositionInfo()
 {
-    QString format = "mm:ss";
+    QString format = "mm:ss:zzz";
     if (durationTime().hour() != 0)
-        format = "hh:mm:ss";
+        format = "hh:mm:ss:zzz";
 
     return elapsedTime().toString(format) + " / " + durationTime().toString(format);
 }
@@ -51,15 +55,40 @@ void MediaPlayer::open()
         fileDialog.setDirectory(QSettings().value("mediaDir").toString());
     if (fileDialog.exec() == QDialog::Accepted) {
         QUrl *fileUrl = new QUrl(fileDialog.selectedUrls().constFirst());
-
         QFile MediaFile(fileUrl->toLocalFile());
+        if(!MediaFile.open(QIODevice::ReadOnly))
+        {
+            qInfo()<<"Not open for readonly\n";
+        }
         QFileInfo filedir(MediaFile);
         QString dirInString=filedir.dir().path();
         QSettings().setValue("mediaDir",dirInString);
         m_mediaFileName = fileUrl->fileName();
         setMedia(*fileUrl);
         emit message("Opened file " + fileUrl->fileName());
+        //----------------------------------------
+        QByteArray audioData = MediaFile.readAll();
+
+        audioBuffer.open(QIODevice::ReadWrite);
+
+        audioBuffer.write(audioData);
+        audioBuffer.close();
+        //audioBuffer.open(QIODevice::ReadOnly);
         play();
+
+        QString filepath;
+        filepath = filedir.absoluteFilePath();
+
+        p = new QMediaPlayer(this);
+        p->setMedia(*fileUrl);
+
+        connect(p, &QMediaPlayer::durationChanged, [this]() {
+            double tot_duration = p->duration();
+            //qInfo() << "Total duration updated: " << tot_duration;
+            emit sendDuration(tot_duration);
+            emit sendBuffer(audioBuffer);
+        });
+        //----------------------------------------------
     }
 }
 
@@ -90,3 +119,10 @@ void MediaPlayer::togglePlayback()
     else if (state() == MediaPlayer::PlayingState)
         pause();
 }
+
+//============================================================
+/*QBuffer MediaPlayer::getBuffer()
+{
+    return audioBuffer;
+}
+*/
